@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en" class="dark h-full bg-[#050507] text-zinc-100 selection:bg-red-600 selection:text-white">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GEKKY SHOP // Y2K VAMP VAULT</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { colors: { cyber: { bg: '#050507', surface: '#0b0c10', card: '#101218', cardHover: '#161922', border: 'rgba(255, 255, 255, 0.12)', chrome: '#c0c0c0', accentRed: '#ff003c', accentPurple: '#a855f7' } }, fontFamily: { display: ['Syne', 'Orbitron', 'sans-serif'], sans: ['Inter', 'system-ui', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] } } } }
+  </script>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@600;800;900&family=Syne:wght@700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.6/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #050507; }
+    ::-webkit-scrollbar-thumb { background: #1e2230; border: 1px solid rgba(255, 0, 60, 0.3); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #ff003c; box-shadow: 0 0 10px #ff003c; }
+    
+    .y2k-text { 
+      background: linear-gradient(135deg, #ffffff 20%, #ff003c 70%, #550013 100%); 
+      -webkit-background-clip: text; 
+      background-clip: text; 
+      -webkit-text-fill-color: transparent; 
+      filter: drop-shadow(0px 0px 15px rgba(255, 0, 60, 0.6)); 
+    }
+    
+    .holographic-card { 
+      background: rgba(12, 12, 16, 0.9); 
+      backdrop-filter: blur(20px); 
+      -webkit-backdrop-filter: blur(20px); 
+      border: 1px solid rgba(255, 0, 60, 0.25); 
+      box-shadow: inset 0 0 20px rgba(255, 0, 60, 0.05), 0 20px 40px -15px rgba(0, 0, 0, 0.9); 
+    }
+    .holographic-card:hover { 
+      border-color: rgba(255, 0, 60, 0.8); 
+      box-shadow: inset 0 0 25px rgba(255, 0, 60, 0.2), 0 0 35px rgba(255, 0, 60, 0.4); 
+    }
+    .scanline-overlay { background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.3)); background-size: 100% 4px; pointer-events: none; }
+    .cyber-grid { background-size: 50px 50px; background-image: linear-gradient(to right, rgba(255, 0, 60, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 0, 60, 0.03) 1px, transparent 1px); }
+  </style>
+</head>
+<body class="h-full font-sans antialiased bg-[#050507] text-zinc-100 selection:bg-red-600 selection:text-white relative overflow-x-hidden">
+  
+  <div class="fixed inset-0 cyber-grid pointer-events-none opacity-80 z-0"></div>
+  <div class="fixed inset-0 scanline-overlay pointer-events-none opacity-30 z-0"></div>
+
+  <div id="root" class="relative z-10 min-h-full flex flex-col"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useCallback } = React;
+
+    const SUPABASE_URL = 'https://wdnptsavscaarxnzznjb.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_HAKxLOwxotoHp3uRaXM43g_0SQxDEDO';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const INITIAL_SITE_SETTINGS = {
+      siteName: "GEKKY SHOP",
+      heroTitle: "THE FUTURE OF DIGITAL GOODS.",
+      heroSubtitle: "Curated Cyber Y2K source code, production toolkits, high-end 3D design packages, and developer OS templates.",
+      announcementText: "† SEΛSON 04 VΛMPS LIVE // INSTANT VΛULT DELIVERIES ENABLED †",
+      currencySymbol: "$",
+      bioText: "GEKKY SHOP is an independent underground cyber storefront crafted for digital creators, engineers, and visual artists.",
+      cryptoAddress: "TYvK...YOUR_BINANCE_WALLET_ADDRESS",
+      gcashNumber: "0912-345-6789",
+      gotymeAccount: "0123-4567-8910"
+    };
+
+    const INITIAL_CATEGORIES = [
+      { id: "cat-1", name: "DIGITAL PRODUCTS" },
+      { id: "cat-2", name: "SOFTWARE" },
+      { id: "cat-3", name: "DESIGN" },
+      { id: "cat-4", name: "SERVICES" }
+    ];
+
+    const FALLBACK_PRODUCTS = [
+      { id: "prod-1", name: "Real", category_id: "cat-2", price: 10, compare_price: 20, stock: 150, product_type: "EXECUTOR", active: true, featured: true, image_url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80", description: "Experience a premium Roblox scripting experience with a reliable and consistent tool...", digital_file_name: "real_executor_v1.zip" },
+      { id: "prod-2", name: "Aether VAMP SaaS Boilerplate", category_id: "cat-1", price: 49, compare_price: 99, stock: 80, product_type: "Full-Stack Source Code", active: true, featured: true, image_url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80", description: "Production Next.js 14 App Router starter integrated with Supabase Auth.", digital_file_name: "aether_os_v2_core.zip" }
+    ];
+
+    function App() {
+      const [settings, setSettings] = useState(INITIAL_SITE_SETTINGS);
+      const [products, setProducts] = useState(FALLBACK_PRODUCTS);
+      const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+      const [orders, setOrders] = useState([]);
+      const [user, setUser] = useState({ loggedIn: false, email: "visitor@gekky.shop", name: "Guest", role: "visitor" });
+      const [isAdminView, setIsAdminView] = useState(false);
+      const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+      const [activePage, setActivePage] = useState("home");
+      const [selectedProductId, setSelectedProductId] = useState("prod-1");
+      const [isCartOpen, setIsCartOpen] = useState(false);
+      const [cart, setCart] = useState([]);
+      const [toasts, setToasts] = useState([]);
+
+      useEffect(() => {
+        supabase.auth.getSession().then(({ data: { session } }) => handleSession(session));
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => handleSession(session));
+        fetchCMSettings();
+        fetchProducts();
+        return () => subscription.unsubscribe();
+      }, []);
+
+      // Automatically update the browser tab title when siteName changes
+      useEffect(() => {
+        if (settings.siteName) {
+          document.title = `${settings.siteName} // Y2K VAMP VAULT`;
+        }
+      }, [settings.siteName]);
+
+      const fetchCMSettings = async () => {
+        const { data } = await supabase.from('site_settings').select('*').eq('id', 1).single();
+        if (data) {
+          setSettings(prev => ({
+            ...prev,
+            siteName: data.site_name || prev.siteName,
+            heroTitle: data.hero_title || prev.heroTitle,
+            heroSubtitle: data.hero_subtitle || prev.heroSubtitle,
+            announcementText: data.announcement_text || prev.announcementText,
+            bioText: data.bio_text || prev.bioText,
+            cryptoAddress: data.crypto_address || prev.cryptoAddress,
+            gcashNumber: data.gcash_number || prev.gcashNumber,
+            gotymeAccount: data.gotyme_account || prev.gotymeAccount
+          }));
+        }
+      };
+
+      const fetchProducts = async () => {
+        const { data } = await supabase.from('products').select('*');
+        if (data && data.length > 0) setProducts(data);
+      };
+
+      const handleSession = async (currentSession) => {
+        if (currentSession) {
+          const { data: profile } = await supabase.from('profiles').select('*').eq('id', currentSession.user.id).single();
+          if (profile) {
+            setUser({ loggedIn: true, email: profile.email, name: profile.email.split('@')[0], role: profile.role });
+            if (profile.role === 'admin') setIsAdminView(true);
+          } else {
+            setUser({ loggedIn: true, email: currentSession.user.email, name: currentSession.user.email.split('@')[0], role: "member" });
+          }
+        } else {
+          setUser({ loggedIn: false, email: "visitor@gekky.shop", name: "Guest", role: "visitor" });
+          setIsAdminView(false);
+          if (activePage === "admin") setActivePage("home");
+        }
+      };
+
+      const handleLogout = async () => {
+        await supabase.auth.signOut();
+        addToast("Logged out successfully.");
+      };
+
+      const addToast = useCallback((message, type = "success") => {
+        const id = Date.now();
+        setToasts(prev => [...prev, { id, message, type }]);
+        setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+      }, []);
+
+      const cartSubtotal = useMemo(() => cart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0), [cart]);
+      const cartCount = useMemo(() => cart.reduce((acc, item) => acc + item.quantity, 0), [cart]);
+
+      const addToCart = (product, qty = 1) => {
+        if (product.stock <= 0) return addToast("Item is out of stock.", "error");
+        setCart(prev => {
+          const existing = prev.find(item => item.product.id === product.id);
+          if (existing) return prev.map(item => item.product.id === product.id ? { ...item, quantity: existing.quantity + qty } : item);
+          return [...prev, { product, quantity: qty }];
+        });
+        addToast(`Added "${product.name}" to cart!`);
+      };
+
+      const buyNow = (product) => {
+        addToCart(product, 1);
+        setActivePage("checkout");
+      };
+
+      const updateCartQty = (productId, qty) => {
+        if (qty <= 0) return setCart(prev => prev.filter(item => item.product.id !== productId));
+        setCart(prev => prev.map(item => item.product.id === productId ? { ...item, quantity: qty } : item));
+      };
+
+      const removeFromCart = (productId) => {
+        setCart(prev => prev.filter(item => item.product.id !== productId));
+        addToast("Item removed from cart.", "info");
+      };
+
+      const navigateToProduct = (id) => {
+        setSelectedProductId(id);
+        setActivePage("product-detail");
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col bg-[#050507] text-zinc-100 font-sans selection:bg-red-600 selection:text-white">
+          
+          <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none">
+            {toasts.map(t => (
+              <div key={t.id} className={`pointer-events-auto p-4 rounded-xl border holographic-card shadow-[0_0_20px_rgba(255,0,60,0.3)] flex items-center gap-3 ${t.type === 'error' ? 'border-red-500/60 text-red-200' : 'border-red-500/60 text-red-100'}`}>
+                <i className={`fas ${t.type === 'error' ? 'fa-triangle-exclamation text-red-500' : 'fa-skull text-red-500'} text-lg`}></i>
+                <span className="text-xs font-semibold tracking-wide font-mono">{t.message}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-zinc-950/95 border-b border-red-600/30 px-4 py-1.5 text-[11px] font-mono flex justify-between items-center text-zinc-400">
+            <div className="flex items-center gap-2">
+              <span className={`inline-block w-2 h-2 rounded-full shadow-[0_0_10px_#ff003c] ${user.role === 'admin' ? 'bg-red-500 animate-ping' : 'bg-zinc-600'}`}></span>
+              <span>USER ROLE: <strong className="text-red-400">{user.role.toUpperCase()}</strong> ({user.email})</span>
+            </div>
+            {user.loggedIn && (
+              <button onClick={handleLogout} className="text-zinc-400 hover:text-red-400 transition">Sign Out</button>
+            )}
+          </div>
+
+          {settings.announcementText && (
+            <div className="bg-gradient-to-r from-red-950/80 via-zinc-900 to-black border-b border-red-600/40 py-2 px-4 text-center text-[11px] font-mono tracking-widest text-red-400 uppercase overflow-hidden shadow-[inset_0_0_20px_rgba(255,0,60,0.15)]">
+              <span className="inline-block animate-pulse">{settings.announcementText}</span>
+            </div>
+          )}
+
+          <header className="sticky top-0 z-40 bg-[#050507]/90 backdrop-blur-xl border-b border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.8)]">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-8">
+                <button onClick={() => setActivePage("home")} className="flex items-center gap-3 group text-left">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 via-black to-zinc-900 p-[1.5px] shadow-[0_0_25px_rgba(255,0,60,0.6)] group-hover:scale-105 transition-transform">
+                    <div className="w-full h-full bg-black rounded-[10px] flex items-center justify-center font-display font-black text-red-500 text-lg tracking-tighter">†</div>
+                  </div>
+                  <div>
+                    <span className="font-display font-black text-xl tracking-widest y2k-text uppercase">{settings.siteName}</span>
+                  </div>
+                </button>
+                <nav className="hidden md:flex items-center gap-6 text-xs font-mono font-bold tracking-wider text-zinc-400 uppercase">
+                  <button onClick={() => setActivePage("home")} className={`hover:text-red-500 transition ${activePage === 'home' ? 'text-red-400 border-b-2 border-red-600 pb-1 shadow-[0_10px_10px_-5px_rgba(255,0,60,0.4)]' : ''}`}>HOME</button>
+                  <button onClick={() => setActivePage("store")} className={`hover:text-red-500 transition ${activePage === 'store' ? 'text-red-400 border-b-2 border-red-600 pb-1' : ''}`}>STORE</button>
+                  <button onClick={() => setActivePage("about")} className={`hover:text-red-500 transition ${activePage === 'about' ? 'text-red-400 border-b-2 border-red-600 pb-1' : ''}`}>ABOUT</button>
+                </nav>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button onClick={() => setIsCartOpen(true)} className="relative p-2.5 rounded-xl holographic-card text-zinc-300 hover:text-red-500 transition group">
+                  <i className="fas fa-shopping-bag text-sm group-hover:scale-110 transition-transform"></i>
+                  {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-mono font-black w-4 h-4 rounded-full flex items-center justify-center shadow-[0_0_10px_#ff003c]">{cartCount}</span>}
+                </button>
+                <button onClick={() => user.loggedIn ? setActivePage("account") : setIsAuthModalOpen(true)} className={`p-2.5 rounded-xl holographic-card transition ${activePage === 'account' ? 'border-red-600 text-red-400 shadow-[0_0_15px_rgba(255,0,60,0.4)]' : 'text-zinc-300 hover:text-red-500'}`}>
+                  <i className="fas fa-user-circle text-base"></i>
+                </button>
+                {user.role === 'admin' && (
+                  <button onClick={() => { setIsAdminView(true); setActivePage("admin"); }} className={`hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-[11px] font-mono font-bold transition shadow-[0_0_15px_rgba(255,0,60,0.3)] ${activePage === 'admin' ? 'border-red-600 bg-red-950/40 text-red-400' : 'border-white/20 text-zinc-300 hover:border-red-600'}`}>
+                    <i className="fas fa-shield-halved text-red-500 animate-pulse"></i> ADMIN
+                  </button>
+                )}
+              </div>
+            </div>
+          </header>
+
+          <main className="flex-1">
+            {activePage === "home" && <HomePage settings={settings} products={products} categories={categories} onSelectProduct={navigateToProduct} onBrowseStore={() => setActivePage("store")} onAddToCart={addToCart} onBuyNow={buyNow} />}
+            {activePage === "store" && <StorePage settings={settings} products={products} onSelectProduct={navigateToProduct} onAddToCart={addToCart} onBuyNow={buyNow} />}
+            {activePage === "product-detail" && <ProductDetailPage settings={settings} productId={selectedProductId} products={products} onAddToCart={addToCart} onBuyNow={buyNow} />}
+            {activePage === "checkout" && <CheckoutPage settings={settings} cart={cart} cartSubtotal={cartSubtotal} user={user} onOrderComplete={(newOrder) => { setOrders(prev => [newOrder, ...prev]); setCart([]); setActivePage("account"); addToast("Order submitted for payment verification! Manual key delivery pending.", "success"); }} />}
+            {activePage === "account" && <AccountPage user={user} orders={orders} />}
+            {activePage === "about" && <AboutPage settings={settings} />}
+
+            {activePage === "admin" && (
+              user.role === 'admin' ? (
+                <AdminDashboard settings={settings} setSettings={setSettings} products={products} fetchProducts={fetchProducts} categories={categories} orders={orders} addToast={addToast} fetchCMSettings={fetchCMSettings} />
+              ) : (
+                <div className="max-w-4xl mx-auto px-4 py-32 text-center space-y-4">
+                  <i className="fas fa-skull text-6xl text-red-600 mb-4 animate-bounce"></i>
+                  <h1 className="text-4xl font-display font-extrabold text-white y2k-text">ACCESS DENIED</h1>
+                  <p className="text-zinc-400 font-mono text-sm">Your clearance level ({user.role.toUpperCase()}) cannot bypass VAMP protocols.</p>
+                  <button onClick={() => setActivePage("store")} className="mt-6 px-8 py-3 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl shadow-[0_0_25px_rgba(255,0,60,0.5)] transition">RETURN TO STORE</button>
+                </div>
+              )
+            )}
+          </main>
+
+          {isCartOpen && (
+            <div className="fixed inset-0 z-50 overflow-hidden bg-black/80 backdrop-blur-md">
+              <div className="absolute inset-0" onClick={() => setIsCartOpen(false)}></div>
+              <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
+                <div className="w-screen max-w-md bg-[#0b0c10] border-l border-red-600/40 text-white shadow-[-10px_0_40px_rgba(255,0,60,0.2)] flex flex-col">
+                  <div className="p-6 border-b border-white/10 flex items-center justify-between bg-zinc-950">
+                    <h3 className="font-display font-bold text-sm tracking-widest text-white flex items-center gap-2"><i className="fas fa-shopping-bag text-red-500"></i> SHOPPING CART ({cartCount})</h3>
+                    <button onClick={() => setIsCartOpen(false)} className="text-zinc-400 hover:text-white"><i className="fas fa-xmark text-lg"></i></button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                    {cart.map(item => (
+                      <div key={item.product.id} className="flex gap-4 p-3 holographic-card rounded-xl border border-red-600/30">
+                        <img src={item.product.image_url} alt={item.product.name} className="w-16 h-16 rounded-lg object-cover border border-white/10" />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-xs text-white truncate">{item.product.name}</h4>
+                          <p className="font-mono text-xs text-red-400 font-bold mt-1">{settings.currencySymbol}{item.product.price}</p>
+                          <div className="flex items-center gap-3 mt-2">
+                            <div className="flex items-center border border-white/10 rounded-lg bg-zinc-900 font-mono text-xs overflow-hidden">
+                              <button onClick={() => updateCartQty(item.product.id, item.quantity - 1)} className="px-2.5 py-1 text-zinc-400 hover:text-white hover:bg-zinc-800">-</button>
+                              <span className="px-3 font-bold text-red-400">{item.quantity}</span>
+                              <button onClick={() => updateCartQty(item.product.id, item.quantity + 1)} className="px-2.5 py-1 text-zinc-400 hover:text-white hover:bg-zinc-800">+</button>
+                            </div>
+                            <button onClick={() => removeFromCart(item.product.id)} className="text-[11px] font-mono text-red-500 hover:underline">Remove</button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {cart.length > 0 && (
+                    <div className="p-6 border-t border-red-600/30 bg-zinc-950 space-y-4 font-mono">
+                      <div className="flex justify-between text-sm font-bold text-white"><span>Total Due</span><span className="text-red-500 font-black text-base">{settings.currencySymbol}{cartSubtotal}</span></div>
+                      <button onClick={() => { setIsCartOpen(false); setActivePage("checkout"); }} className="w-full py-4 bg-gradient-to-r from-red-600 to-black hover:from-red-500 hover:to-zinc-900 text-white font-display font-black text-xs tracking-widest rounded-xl transition shadow-[0_0_25px_rgba(255,0,60,0.5)] text-center">PROCEED TO CHECKOUT</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isAuthModalOpen && (
+            <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-lg flex items-center justify-center p-4">
+              <div className="holographic-card rounded-3xl w-full max-w-md p-8 space-y-6 relative border border-red-600/50 shadow-[0_0_50px_rgba(255,0,60,0.3)]">
+                <button onClick={() => setIsAuthModalOpen(false)} className="absolute top-5 right-5 text-zinc-400 hover:text-white"><i className="fas fa-times text-lg"></i></button>
+                <div>
+                  <h3 className="font-display font-extrabold text-xl text-white tracking-widest y2k-text">VAMP AUTHENTICATION</h3>
+                  <p className="text-xs text-zinc-400 font-mono mt-1">Sign in or register to access the underground vault.</p>
+                </div>
+
+                <form onSubmit={async (e) => { 
+                  e.preventDefault(); 
+                  const email = e.target.authEmail.value;
+                  const password = e.target.authPassword.value;
+                  const isSignUp = e.nativeEvent.submitter.name === 'signup';
+                  let error;
+
+                  if (isSignUp) {
+                    const res = await supabase.auth.signUp({ email, password });
+                    error = res.error;
+                    if (!error) addToast("Registration complete! Vault unlocked.", "success");
+                  } else {
+                    const res = await supabase.auth.signInWithPassword({ email, password });
+                    error = res.error;
+                    if (!error) addToast("Authentication verified.", "success");
+                  }
+
+                  if (error) addToast(error.message, "error");
+                  else setIsAuthModalOpen(false);
+                }} className="space-y-4 font-mono text-xs">
+                  <div>
+                    <label className="text-zinc-400 block mb-1.5 font-bold">Email Address</label>
+                    <input id="authEmail" type="email" required className="w-full bg-zinc-950 border border-white/15 rounded-xl p-3.5 text-white focus:outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(255,0,60,0.4)] transition" placeholder="vamp@gekky.shop" />
+                  </div>
+                  <div>
+                    <label className="text-zinc-400 block mb-1.5 font-bold">Passcode</label>
+                    <input id="authPassword" type="password" required className="w-full bg-zinc-950 border border-white/15 rounded-xl p-3.5 text-white focus:outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(255,0,60,0.4)] transition" placeholder="••••••••" />
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <button type="submit" name="signin" className="flex-1 py-3.5 bg-red-600 hover:bg-red-500 text-white font-extrabold rounded-xl transition shadow-[0_0_20px_rgba(255,0,60,0.5)]">SIGN IN</button>
+                    <button type="submit" name="signup" className="flex-1 py-3.5 bg-zinc-900 hover:bg-zinc-800 text-white font-extrabold rounded-xl transition border border-white/20">REGISTER</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          <footer className="border-t border-white/10 bg-[#030305] py-12 text-zinc-500 text-xs font-mono text-center relative z-10">
+            <p className="tracking-widest">&copy; {new Date().getFullYear()} {settings.siteName} DIGITAL. ALL RIGHTS RESERVED.</p>
+          </footer>
+        </div>
+      );
+    }
+
+    function HomePage({ settings, products, onSelectProduct, onBrowseStore, onAddToCart, onBuyNow }) {
+      const featured = products.filter(p => p.featured);
+      return (
+        <div className="space-y-24 pb-24">
+          <section className="relative overflow-hidden pt-24 pb-28 lg:pt-36 lg:pb-40 border-b border-red-600/30 text-center">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-red-600/10 blur-[130px] rounded-full pointer-events-none"></div>
+            <div className="max-w-7xl mx-auto px-4 relative z-10">
+              <span className="inline-block px-4 py-1.5 rounded-full bg-red-950/60 border border-red-600/50 text-red-400 text-[10px] font-mono font-bold tracking-widest uppercase mb-6 shadow-[0_0_25px_rgba(255,0,60,0.3)]">
+                <i className="fas fa-skull text-red-500 mr-1.5"></i> INSTANT PRODUCT ACCESS
+              </span>
+              <h1 className="text-4xl sm:text-7xl font-display font-extrabold text-white mb-6 uppercase tracking-tight y2k-text leading-none">{settings.heroTitle}</h1>
+              <p className="text-sm sm:text-base text-zinc-400 font-mono max-w-2xl mx-auto mb-12 leading-relaxed">{settings.heroSubtitle}</p>
+              <button onClick={onBrowseStore} className="px-10 py-4 bg-gradient-to-r from-red-600 via-zinc-900 to-black hover:from-red-500 hover:to-zinc-800 text-white font-display font-black text-xs tracking-widest rounded-2xl transition shadow-[0_0_35px_rgba(255,0,60,0.5)] transform hover:-translate-y-0.5">SHOP NOW CATALOG</button>
+            </div>
+          </section>
+
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-end mb-10 border-b border-white/10 pb-4">
+              <div>
+                <h2 className="text-2xl font-display font-extrabold text-white tracking-widest uppercase y2k-text">FEATURED DROPS</h2>
+                <p className="text-zinc-400 font-mono text-xs mt-1">Underground production systems & UI kits</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {featured.map(product => <ProductCard key={product.id} product={product} settings={settings} onSelect={onSelectProduct} onAddToCart={onAddToCart} onBuyNow={onBuyNow} />)}
+            </div>
+          </section>
+        </div>
+      );
+    }
+
+    function ProductCard({ product, settings, onSelect, onAddToCart, onBuyNow }) {
+      return (
+        <div className="group holographic-card rounded-2xl overflow-hidden transition-all duration-300 flex flex-col hover:-translate-y-1.5 border border-white/10">
+          <div className="relative aspect-video bg-zinc-950 cursor-pointer overflow-hidden" onClick={() => onSelect(product.id)}>
+            <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0b0c10] via-transparent to-transparent opacity-80"></div>
+          </div>
+          <div className="p-6 flex-1 flex flex-col justify-between">
+            <div>
+              <span className="text-[10px] font-mono font-bold text-red-500 uppercase tracking-widest">{product.product_type || "Digital Asset"}</span>
+              <h3 onClick={() => onSelect(product.id)} className="font-display font-bold text-base text-white hover:text-red-400 cursor-pointer transition mt-1 line-clamp-1">{product.name}</h3>
+              <p className="text-zinc-400 font-mono text-xs mt-2.5 line-clamp-2 leading-relaxed">{product.description}</p>
+            </div>
+            <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between">
+              <span className="text-xl font-mono font-black text-red-400">{settings.currencySymbol}{product.price}</span>
+              <div className="flex items-center gap-2">
+                <button onClick={() => onAddToCart(product)} className="px-3 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white text-xs font-bold transition border border-white/15 flex items-center gap-1">
+                  <i className="fas fa-cart-plus text-red-500"></i> ADD
+                </button>
+                <button onClick={() => onBuyNow(product)} className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-black transition shadow-[0_0_15px_rgba(255,0,60,0.4)] flex items-center gap-1">
+                  <i className="fas fa-bolt"></i> BUY NOW
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function StorePage({ settings, products, onSelectProduct, onAddToCart, onBuyNow }) {
+      return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
+          <div className="border-b border-white/10 pb-6">
+            <h1 className="text-3xl font-display font-extrabold text-white uppercase y2k-text tracking-widest">STORE CATALOG</h1>
+            <p className="text-zinc-400 font-mono text-xs mt-1">Explore all verified digital kits, source codes, and tools.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {products.map(p => <ProductCard key={p.id} product={p} settings={settings} onSelect={onSelectProduct} onAddToCart={onAddToCart} onBuyNow={onBuyNow} />)}
+          </div>
+        </div>
+      );
+    }
+
+    function ProductDetailPage({ settings, productId, products, onAddToCart, onBuyNow }) {
+      const product = products.find(p => p.id === productId) || products[0];
+      return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            <div className="lg:col-span-7 aspect-video bg-zinc-950 holographic-card rounded-3xl overflow-hidden border border-red-600/40 shadow-[0_0_35px_rgba(255,0,60,0.2)]">
+              <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+            </div>
+            <div className="lg:col-span-5 space-y-6 holographic-card p-8 rounded-3xl border border-white/15">
+              <div>
+                <span className="text-[10px] font-mono font-bold text-red-500 uppercase tracking-widest">{product.product_type}</span>
+                <h1 className="text-3xl font-display font-extrabold text-white y2k-text mt-1">{product.name}</h1>
+              </div>
+              <div className="p-4 rounded-xl bg-zinc-950 border border-white/10">
+                <span className="text-3xl font-mono font-black text-red-400">{settings.currencySymbol}{product.price}</span>
+              </div>
+              <p className="text-xs font-mono text-zinc-300 leading-relaxed">{product.description}</p>
+              <div className="flex gap-4">
+                <button onClick={() => onAddToCart(product, 1)} className="flex-1 py-4 bg-zinc-900 hover:bg-zinc-800 text-white font-mono text-xs font-bold rounded-xl transition border border-white/15">
+                  ADD TO CART
+                </button>
+                <button onClick={() => onBuyNow(product)} className="flex-1 py-4 bg-gradient-to-r from-red-600 to-black hover:from-red-500 text-white font-display font-black text-xs tracking-widest rounded-xl transition shadow-[0_0_30px_rgba(255,0,60,0.5)]">
+                  BUY NOW
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function CheckoutPage({ settings, cart, cartSubtotal, user, onOrderComplete }) {
+      const [email, setEmail] = useState(user.email);
+      const [paymentMethod, setPaymentMethod] = useState("crypto");
+      const [referenceNumber, setReferenceNumber] = useState("");
+      const [isProcessing, setIsProcessing] = useState(false);
+      const mainProduct = cart.length > 0 ? cart[0].product : null;
+
+      const handleCheckoutSubmit = (e) => {
+        e.preventDefault();
+        setIsProcessing(true);
+        setTimeout(() => {
+          const newOrder = {
+            id: `ORD-${Math.floor(10000 + Math.random() * 90000)}`,
+            customer_email: email,
+            customer_name: "Vamp Customer",
+            date: new Date().toISOString().split('T')[0],
+            subtotal: cartSubtotal,
+            total: cartSubtotal,
+            payment_status: "PENDING_MANUAL_REVIEW",
+            payment_reference: referenceNumber || `VAMP-REF-${Date.now()}`,
+            items: cart.map(item => ({ product_id: item.product.id, product_name: item.product.name, price: item.product.price, quantity: item.quantity, file_name: item.product.digital_file_name }))
+          };
+          setIsProcessing(false);
+          onOrderComplete(newOrder);
+        }, 1500);
+      };
+
+      return (
+        <div className="max-w-[480px] mx-auto px-4 py-16 font-sans">
+          <div className="holographic-card border border-red-600/40 rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(255,0,60,0.2)]">
+            
+            <div className="p-5 border-b border-red-600/30 flex justify-between items-center bg-zinc-950">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-black border border-red-600/40 rounded-xl flex items-center justify-center text-red-500 font-bold">
+                  <i className="fas fa-cube"></i>
+                </div>
+                <div>
+                  <h3 className="text-white font-bold text-sm tracking-wide">{mainProduct ? mainProduct.name : "Digital Payload"}</h3>
+                  <p className="text-red-400 font-mono text-xs">{settings.currencySymbol}{cartSubtotal}</p>
+                </div>
+              </div>
+              <div className="text-white font-mono font-black text-base">
+                {settings.currencySymbol}{cartSubtotal} <span className="text-[10px] text-zinc-500 font-normal">USD</span>
+              </div>
+            </div>
+
+            <form onSubmit={handleCheckoutSubmit} className="p-6 space-y-6">
+              <div>
+                <h3 className="text-white font-display font-bold text-lg mb-3 tracking-wider y2k-text">VAULT CREDENTIALS</h3>
+                <label className="text-xs font-mono font-bold text-zinc-300 block mb-1.5">
+                  Email Address <span className="text-red-500">*</span> <span className="text-[10px] text-zinc-500 font-normal">(Where key will be sent)</span>
+                </label>
+                <input 
+                  type="email" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  placeholder="vamp@gekky.shop"
+                  className="w-full bg-zinc-950 border border-white/15 rounded-xl px-4 py-3.5 font-mono text-xs text-white focus:border-red-600 focus:shadow-[0_0_15px_rgba(255,0,60,0.4)] focus:outline-none transition" 
+                  required 
+                />
+              </div>
+
+              <div>
+                <h3 className="text-white font-display font-bold text-lg mb-3 tracking-wider y2k-text">PAYMENT GATEWAY</h3>
+                <div className="space-y-3 font-mono text-xs">
+                  
+                  {/* Crypto Option: USDT & LTC */}
+                  <div 
+                    onClick={() => setPaymentMethod("crypto")}
+                    className={`cursor-pointer p-4 rounded-xl border flex justify-between items-center transition ${paymentMethod === 'crypto' ? 'border-red-600 bg-red-950/40 shadow-[0_0_15px_rgba(255,0,60,0.3)]' : 'border-white/10 bg-zinc-950 hover:border-white/30'}`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-red-600/30 flex items-center justify-center text-red-400">
+                        <i className="fas fa-coins text-lg"></i>
+                      </div>
+                      <div>
+                        <span className="text-white font-bold text-sm block">Crypto (USDT & LTC)</span>
+                        <span className="text-[11px] text-zinc-400">Direct Binance Transfer</span>
+                      </div>
+                    </div>
+                    {paymentMethod === 'crypto' && <i className="fas fa-check-circle text-red-500 text-lg"></i>}
+                  </div>
+
+                  {/* GCash Option */}
+                  <div 
+                    onClick={() => setPaymentMethod("gcash")}
+                    className={`cursor-pointer p-4 rounded-xl border flex justify-between items-center transition ${paymentMethod === 'gcash' ? 'border-red-600 bg-red-950/40 shadow-[0_0_15px_rgba(255,0,60,0.3)]' : 'border-white/10 bg-zinc-950 hover:border-white/30'}`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-[#007df4]/20 border border-[#007df4]/40 flex items-center justify-center text-[#007df4] font-extrabold text-sm">
+                        G
+                      </div>
+                      <div>
+                        <span className="text-white font-bold text-sm block">GCash</span>
+                        <span className="text-[11px] text-zinc-400">Mobile Wallet Transfer</span>
+                      </div>
+                    </div>
+                    {paymentMethod === 'gcash' && <i className="fas fa-check-circle text-red-500 text-lg"></i>}
+                  </div>
+
+                  {/* GoTyme Option */}
+                  <div 
+                    onClick={() => setPaymentMethod("gotyme")}
+                    className={`cursor-pointer p-4 rounded-xl border flex justify-between items-center transition ${paymentMethod === 'gotyme' ? 'border-red-600 bg-red-950/40 shadow-[0_0_15px_rgba(255,0,60,0.3)]' : 'border-white/10 bg-zinc-950 hover:border-white/30'}`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-[#00e599]/20 border border-[#00e599]/40 flex items-center justify-center text-[#00e599] font-extrabold text-xs">
+                        GT
+                      </div>
+                      <div>
+                        <span className="text-white font-bold text-sm block">GoTyme Bank</span>
+                        <span className="text-[11px] text-zinc-400">Digital Banking Transfer</span>
+                      </div>
+                    </div>
+                    {paymentMethod === 'gotyme' && <i className="fas fa-check-circle text-red-500 text-lg"></i>}
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Dynamic Billing Instructions Box linked to admin payment settings */}
+              <div className="p-4 rounded-xl bg-zinc-950 border border-red-600/30 font-mono text-xs text-zinc-300 space-y-3">
+                {paymentMethod === 'crypto' && (
+                  <div className="space-y-1.5">
+                    <p className="font-bold text-red-400"><i className="fas fa-terminal mr-1"></i> Send exact amount to Binance Wallet:</p>
+                    <p className="text-zinc-400 text-[11px]">Network: <span className="text-white">TRC20 (USDT) or Litecoin (LTC)</span></p>
+                    <p className="text-zinc-400 text-[11px]">Wallet Address / Pay ID:</p>
+                    <p className="bg-black p-2.5 rounded-lg border border-white/10 text-red-300 font-mono select-all text-center break-all">{settings.cryptoAddress}</p>
+                  </div>
+                )}
+                {paymentMethod === 'gcash' && (
+                  <div className="space-y-1.5">
+                    <p className="font-bold text-red-400"><i className="fas fa-terminal mr-1"></i> Send payment via GCash:</p>
+                    <p className="text-zinc-400">Account Name: <span className="text-white font-bold">Gekyume Digital</span></p>
+                    <p className="text-zinc-400">GCash Number: <span className="text-red-400 font-bold select-all">{settings.gcashNumber}</span></p>
+                  </div>
+                )}
+                {paymentMethod === 'gotyme' && (
+                  <div className="space-y-1.5">
+                    <p className="font-bold text-red-400"><i className="fas fa-terminal mr-1"></i> Send payment via GoTyme:</p>
+                    <p className="text-zinc-400">Account Name: <span className="text-white font-bold">Gekyume Digital</span></p>
+                    <p className="text-zinc-400">Account No: <span className="text-red-400 font-bold select-all">{settings.gotymeAccount}</span></p>
+                  </div>
+                )}
+
+                <div className="pt-3 mt-3 border-t border-white/10">
+                  <label className="block text-zinc-400 mb-1.5 font-bold">Paste Reference No. / TxID:</label>
+                  <input 
+                    type="text" 
+                    value={referenceNumber}
+                    onChange={(e) => setReferenceNumber(e.target.value)}
+                    placeholder="e.g. TX123456789 or GCash Ref No."
+                    className="w-full bg-black border border-white/15 rounded-xl px-3.5 py-2.5 text-white font-mono text-xs focus:border-red-600 focus:outline-none"
+                    required
+                  />
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={isProcessing || cart.length === 0}
+                className="w-full py-4 bg-gradient-to-r from-red-600 to-black hover:from-red-500 hover:to-zinc-900 disabled:opacity-50 text-white font-display font-black text-xs tracking-widest uppercase rounded-2xl transition shadow-[0_0_35px_rgba(255,0,60,0.5)]"
+              >
+                {isProcessing ? <><i className="fas fa-circle-notch animate-spin mr-2"></i> SUBMITTING ORDER...</> : "SUBMIT PAYMENT REFERENCE"}
+              </button>
+
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    function AccountPage({ user, orders }) {
+      return (
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8 font-mono">
+          <div className="p-8 rounded-3xl holographic-card border border-red-600/40 flex items-center gap-6 shadow-[0_0_30px_rgba(255,0,60,0.15)]">
+            <div className="w-16 h-16 rounded-2xl bg-black border border-red-600/50 flex items-center justify-center font-display font-black text-red-500 text-2xl shadow-[0_0_20px_rgba(255,0,60,0.5)]">
+              {user.name.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-white">{user.name}</h1>
+              <p className="text-xs text-red-400 mt-1">{user.email} • <span className="uppercase text-zinc-300">{user.role}</span> ACCESS</p>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <h3 className="font-bold text-white text-xs tracking-widest uppercase">ORDER & VAULT HISTORY</h3>
+            {orders.length === 0 ? (
+              <div className="p-8 rounded-2xl holographic-card text-zinc-500 text-center text-xs">No vault transactions recorded yet.</div>
+            ) : (
+              orders.map(o => (
+                <div key={o.id} className="p-6 rounded-2xl holographic-card border border-white/10 flex justify-between items-center text-xs">
+                  <div>
+                    <p className="font-bold text-white text-sm">{o.id}</p>
+                    <p className="text-zinc-400 mt-1">{o.items.map(i => i.product_name).join(", ")}</p>
+                    <p className="text-[10px] text-zinc-500 mt-1">Ref: {o.payment_reference}</p>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-red-950 text-red-400 border border-red-600/50 font-bold">{o.payment_status}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    function AboutPage({ settings }) {
+      return (
+        <div className="max-w-4xl mx-auto px-4 py-16 space-y-8 font-mono">
+          <h1 className="text-4xl font-display font-extrabold text-white uppercase y2k-text">ABOUT GEKKY SHOP</h1>
+          <div className="p-8 rounded-3xl holographic-card border border-red-600/40 text-zinc-300 text-xs leading-relaxed space-y-4">
+            <p>{settings.bioText}</p>
+            <p>Every digital framework and asset hosted on GEKKY SHOP is engineered for maximum performance, clean styling, and uncompromised structural integrity.</p>
+          </div>
+        </div>
+      );
+    }
+
+    function AdminDashboard({ settings, setSettings, products, fetchProducts, categories, orders, addToast, fetchCMSettings }) {
+      const [adminTab, setAdminTab] = useState("products");
+      const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+      const [editingProduct, setEditingProduct] = useState(null);
+
+      // CMS State
+      const [siteName, setSiteName] = useState(settings.siteName);
+      const [heroTitle, setHeroTitle] = useState(settings.heroTitle);
+      const [heroSubtitle, setHeroSubtitle] = useState(settings.heroSubtitle);
+      const [announcementText, setAnnouncementText] = useState(settings.announcementText);
+      const [bioText, setBioText] = useState(settings.bioText);
+      const [isSavingCMS, setIsSavingCMS] = useState(false);
+
+      // Payment Settings State
+      const [cryptoAddress, setCryptoAddress] = useState(settings.cryptoAddress);
+      const [gcashNumber, setGcashNumber] = useState(settings.gcashNumber);
+      const [gotymeAccount, setGotymeAccount] = useState(settings.gotymeAccount);
+      const [isSavingPayment, setIsSavingPayment] = useState(false);
+
+      const handleSaveCMS = async (e) => {
+        e.preventDefault();
+        setIsSavingCMS(true);
+        // Safely upsert including payment values so they aren't cleared out
+        const { error } = await supabase.from('site_settings').upsert({
+          id: 1, 
+          site_name: siteName, 
+          hero_title: heroTitle, 
+          hero_subtitle: heroSubtitle, 
+          announcement_text: announcementText, 
+          bio_text: bioText,
+          crypto_address: settings.cryptoAddress,
+          gcash_number: settings.gcashNumber,
+          gotyme_account: settings.gotymeAccount
+        });
+        if (error) addToast("Error: " + error.message, "error");
+        else { addToast("CMS settings saved successfully!"); fetchCMSettings(); }
+        setIsSavingCMS(false);
+      };
+
+      const handleSavePayment = async (e) => {
+        e.preventDefault();
+        setIsSavingPayment(true);
+        // Safely upsert including CMS values so they aren't cleared out
+        const { error } = await supabase.from('site_settings').upsert({
+          id: 1, 
+          site_name: settings.siteName, 
+          hero_title: settings.heroTitle, 
+          hero_subtitle: settings.heroSubtitle, 
+          announcement_text: settings.announcementText, 
+          bio_text: settings.bioText,
+          crypto_address: cryptoAddress,
+          gcash_number: gcashNumber,
+          gotyme_account: gotymeAccount
+        });
+        if (error) addToast("Error: " + error.message, "error");
+        else { addToast("Payment settings updated successfully!"); fetchCMSettings(); }
+        setIsSavingPayment(false);
+      };
+
+      const handleSaveProduct = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const prodId = editingProduct ? editingProduct.id : `prod-${Date.now()}`;
+
+        const payload = {
+          id: prodId,
+          name: formData.get("name"),
+          category_id: formData.get("category_id"),
+          price: Number(formData.get("price")),
+          compare_price: Number(formData.get("compare_price")),
+          stock: Number(formData.get("stock")),
+          product_type: formData.get("product_type"),
+          active: formData.get("active") === "on",
+          featured: formData.get("featured") === "on",
+          image_url: formData.get("image_url"),
+          description: formData.get("description"),
+          digital_file_name: formData.get("digital_file_name") || "download.zip"
+        };
+
+        const { error } = await supabase.from('products').upsert(payload);
+        if (error) addToast("Error saving product: " + error.message, "error");
+        else {
+          addToast(editingProduct ? "Product updated!" : "Product created!");
+          fetchProducts();
+          setIsProductModalOpen(false);
+          setEditingProduct(null);
+        }
+      };
+
+      const handleDeleteProduct = async (id) => {
+        if (window.confirm("Are you sure you want to delete this product?")) {
+          const { error } = await supabase.from('products').delete().eq('id', id);
+          if (error) addToast("Error deleting: " + error.message, "error");
+          else { addToast("Product removed."); fetchProducts(); }
+        }
+      };
+
+      return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8 font-mono">
+          <div className="flex justify-between items-center border-b border-red-600/40 pb-6">
+            <h1 className="text-2xl font-display font-extrabold text-white y2k-text flex items-center gap-3">
+              <i className="fas fa-shield-halved text-red-500"></i> ADMIN CONTROL PANEL
+            </h1>
+            <button onClick={() => { setEditingProduct(null); setIsProductModalOpen(true); }} className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl shadow-[0_0_20px_rgba(255,0,60,0.5)] transition flex items-center gap-2">
+              <i className="fas fa-plus"></i> ADD PRODUCT
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-3 border-b border-white/10 pb-3">
+            <button onClick={() => setAdminTab("products")} className={`px-5 py-2 rounded-xl text-xs font-bold uppercase transition ${adminTab === 'products' ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(255,0,60,0.5)]' : 'holographic-card text-zinc-400 hover:text-white'}`}>Products ({products.length})</button>
+            <button onClick={() => setAdminTab("cms")} className={`px-5 py-2 rounded-xl text-xs font-bold uppercase transition ${adminTab === 'cms' ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(255,0,60,0.5)]' : 'holographic-card text-zinc-400 hover:text-white'}`}>CMS Settings</button>
+            <button onClick={() => setAdminTab("payment")} className={`px-5 py-2 rounded-xl text-xs font-bold uppercase transition ${adminTab === 'payment' ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(255,0,60,0.5)]' : 'holographic-card text-zinc-400 hover:text-white'}`}>Payment Accounts</button>
+          </div>
+
+          {adminTab === "products" && (
+            <div className="overflow-x-auto holographic-card border border-red-600/30 rounded-3xl shadow-[0_0_30px_rgba(255,0,60,0.15)]">
+              <table className="w-full text-left text-xs text-zinc-300">
+                <thead className="bg-zinc-950 text-red-500 uppercase text-[10px] font-bold border-b border-white/10">
+                  <tr>
+                    <th className="p-4">PRODUCT</th>
+                    <th className="p-4">PRICE</th>
+                    <th className="p-4">STOCK</th>
+                    <th className="p-4">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {products.map(p => (
+                    <tr key={p.id} className="hover:bg-red-600/5 transition">
+                      <td className="p-4 font-bold text-white flex items-center gap-3.5">
+                        <img src={p.image_url} alt="" className="w-10 h-10 rounded-xl object-cover border border-white/15 shadow" />
+                        {p.name}
+                      </td>
+                      <td className="p-4 font-bold text-red-400">{settings.currencySymbol}{p.price}</td>
+                      <td className="p-4">{p.stock}</td>
+                      <td className="p-4 space-x-3">
+                        <button onClick={() => { setEditingProduct(p); setIsProductModalOpen(true); }} className="text-red-400 hover:underline">Edit</button>
+                        <button onClick={() => handleDeleteProduct(p.id)} className="text-red-500 hover:underline">Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {adminTab === "cms" && (
+            <form onSubmit={handleSaveCMS} className="p-8 holographic-card rounded-3xl border border-red-600/40 space-y-5 max-w-2xl text-xs shadow-[0_0_30px_rgba(255,0,60,0.15)]">
+              <h3 className="font-bold text-white text-sm tracking-wider text-red-400 border-b border-white/10 pb-2">STOREFRONT GENERAL CMS SETTINGS</h3>
+              <div><label className="text-zinc-400 block mb-1.5 font-bold">Site Title</label><input type="text" value={siteName} onChange={(e) => setSiteName(e.target.value)} className="w-full bg-zinc-950 border border-white/15 rounded-xl p-3 text-white focus:outline-none focus:border-red-600" required /></div>
+              <div><label className="text-zinc-400 block mb-1.5 font-bold">Hero Title</label><input type="text" value={heroTitle} onChange={(e) => setHeroTitle(e.target.value)} className="w-full bg-zinc-950 border border-white/15 rounded-xl p-3 text-white focus:outline-none focus:border-red-600" required /></div>
+              <div><label className="text-zinc-400 block mb-1.5 font-bold">Hero Subtitle</label><textarea value={heroSubtitle} onChange={(e) => setHeroSubtitle(e.target.value)} className="w-full bg-zinc-950 border border-white/15 rounded-xl p-3 text-white h-20 focus:outline-none focus:border-red-600" required></textarea></div>
+              <div><label className="text-zinc-400 block mb-1.5 font-bold">Announcement Text</label><input type="text" value={announcementText} onChange={(e) => setAnnouncementText(e.target.value)} className="w-full bg-zinc-950 border border-white/15 rounded-xl p-3 text-white focus:outline-none focus:border-red-600" required /></div>
+              <div><label className="text-zinc-400 block mb-1.5 font-bold">Brand Bio Text</label><textarea value={bioText} onChange={(e) => setBioText(e.target.value)} className="w-full bg-zinc-950 border border-white/15 rounded-xl p-3 text-white h-24 focus:outline-none focus:border-red-600" required></textarea></div>
+              <button type="submit" disabled={isSavingCMS} className="w-full py-4 bg-red-600 hover:bg-red-500 text-white font-extrabold rounded-xl shadow-[0_0_20px_rgba(255,0,60,0.5)] transition">{isSavingCMS ? "SAVING..." : "SAVE CMS CHANGES"}</button>
+            </form>
+          )}
+
+          {adminTab === "payment" && (
+            <form onSubmit={handleSavePayment} className="p-8 holographic-card rounded-3xl border border-red-600/40 space-y-5 max-w-2xl text-xs shadow-[0_0_30px_rgba(255,0,60,0.15)]">
+              <h3 className="font-bold text-white text-sm tracking-wider text-red-400 border-b border-white/10 pb-2">SECURE PAYMENT ENDPOINTS (ADMIN ONLY)</h3>
+              <div>
+                <label className="text-zinc-400 block mb-1.5 font-bold">Binance / Crypto Wallet Address (USDT TRC20 / LTC)</label>
+                <input type="text" value={cryptoAddress} onChange={(e) => setCryptoAddress(e.target.value)} className="w-full bg-zinc-950 border border-white/15 rounded-xl p-3 text-white font-mono focus:outline-none focus:border-red-600" required />
+              </div>
+              <div>
+                <label className="text-zinc-400 block mb-1.5 font-bold">GCash Number</label>
+                <input type="text" value={gcashNumber} onChange={(e) => setGcashNumber(e.target.value)} className="w-full bg-zinc-950 border border-white/15 rounded-xl p-3 text-white font-mono focus:outline-none focus:border-red-600" required />
+              </div>
+              <div>
+                <label className="text-zinc-400 block mb-1.5 font-bold">GoTyme Bank Account Number</label>
+                <input type="text" value={gotymeAccount} onChange={(e) => setGotymeAccount(e.target.value)} className="w-full bg-zinc-950 border border-white/15 rounded-xl p-3 text-white font-mono focus:outline-none focus:border-red-600" required />
+              </div>
+              <button type="submit" disabled={isSavingPayment} className="w-full py-4 bg-red-600 hover:bg-red-500 text-white font-extrabold rounded-xl shadow-[0_0_20px_rgba(255,0,60,0.5)] transition">{isSavingPayment ? "SAVING..." : "SAVE PAYMENT ACCOUNTS"}</button>
+            </form>
+          )}
+
+          {isProductModalOpen && (
+            <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-lg flex items-center justify-center p-4">
+              <div className="holographic-card rounded-3xl w-full max-w-2xl p-8 space-y-5 max-h-[90vh] overflow-y-auto border border-red-600/50 shadow-[0_0_50px_rgba(255,0,60,0.3)]">
+                <div className="flex justify-between items-center border-b border-white/15 pb-4">
+                  <h3 className="font-bold text-white text-sm tracking-wider">{editingProduct ? "EDIT PRODUCT" : "CREATE PRODUCT"}</h3>
+                  <button onClick={() => setIsProductModalOpen(false)} className="text-zinc-400 hover:text-white"><i className="fas fa-xmark text-lg"></i></button>
+                </div>
+                <form onSubmit={handleSaveProduct} className="space-y-4 text-xs">
+                  <div><label className="text-zinc-400 block mb-1.5 font-bold">Product Name</label><input type="text" name="name" defaultValue={editingProduct?.name || ""} className="w-full bg-zinc-950 border border-white/15 rounded-xl p-3 text-white focus:outline-none focus:border-red-600" required /></div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-zinc-400 block mb-1.5 font-bold">Category</label>
+                      <select name="category_id" defaultValue={editingProduct?.category_id || categories[0]?.id} className="w-full bg-zinc-950 border border-white/15 rounded-xl p-3 text-white focus:outline-none focus:border-red-600">
+                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </select>
+                    </div>
+                    <div><label className="text-zinc-400 block mb-1.5 font-bold">Product Type</label><input type="text" name="product_type" defaultValue={editingProduct?.product_type || "Digital Download"} className="w-full bg-zinc-950 border border-white/15 rounded-xl p-3 text-white focus:outline-none focus:border-red-600" /></div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div><label className="text-zinc-400 block mb-1.5 font-bold">Price</label><input type="number" step="0.01" name="price" defaultValue={editingProduct?.price || 10} className="w-full bg-zinc-950 border border-white/15 rounded-xl p-3 text-white focus:outline-none focus:border-red-600" required /></div>
+                    <div><label className="text-zinc-400 block mb-1.5 font-bold">Compare Price</label><input type="number" step="0.01" name="compare_price" defaultValue={editingProduct?.compare_price || 20} className="w-full bg-zinc-950 border border-white/15 rounded-xl p-3 text-white focus:outline-none focus:border-red-600" /></div>
+                    <div><label className="text-zinc-400 block mb-1.5 font-bold">Stock</label><input type="number" name="stock" defaultValue={editingProduct?.stock || 50} className="w-full bg-zinc-950 border border-white/15 rounded-xl p-3 text-white focus:outline-none focus:border-red-600" required /></div>
+                  </div>
+                  <div><label className="text-zinc-400 block mb-1.5 font-bold">Image URL</label><input type="text" name="image_url" defaultValue={editingProduct?.image_url || ""} className="w-full bg-zinc-950 border border-white/15 rounded-xl p-3 text-white focus:outline-none focus:border-red-600" required /></div>
+                  <div><label className="text-zinc-400 block mb-1.5 font-bold">Description</label><textarea name="description" defaultValue={editingProduct?.description || ""} className="w-full bg-zinc-950 border border-white/15 rounded-xl p-3 text-white h-24 focus:outline-none focus:border-red-600"></textarea></div>
+                  <div className="flex gap-6 pt-2">
+                    <label className="flex items-center gap-2 cursor-pointer text-white font-bold"><input type="checkbox" name="featured" defaultChecked={editingProduct?.featured || false} className="accent-red-600 w-4 h-4" /> Featured</label>
+                    <label className="flex items-center gap-2 cursor-pointer text-white font-bold"><input type="checkbox" name="active" defaultChecked={editingProduct?.active ?? true} className="accent-red-600 w-4 h-4" /> Active</label>
+                  </div>
+                  <button type="submit" className="w-full py-4 bg-red-600 hover:bg-red-500 text-white font-extrabold rounded-xl shadow-[0_0_25px_rgba(255,0,60,0.5)] transition">SAVE PRODUCT TO DATABASE</button>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
